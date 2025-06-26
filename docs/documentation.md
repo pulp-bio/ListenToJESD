@@ -72,7 +72,6 @@ Deterministic latency refers to the ability of a system to guarantee a fixed and
 
 The JESD204B standard defines a high-speed serial interface for connecting one or multiple data converters (<span acronym-label="adc" acronym-form="singular+short">adc</span> or <span acronym-label="dac" acronym-form="singular+short">dac</span>) to a digital processing device. Unlike legacy parallel interfaces that require a separate set of data lines for each bit, JESD204B uses framed serial links with embedded clocks and alignment characters, enabling significantly higher data throughput while simplifying board design. Supporting line rates of up to 12.5 Gbps per lane, JESD204B minimizes the number of interconnects, reduces PCB routing complexity, and eliminates stringent setup and hold timing constraints traditionally associated with wide parallel buses.
 
-![Simplified Data Flow through JESD204B Layers](figures/jesd204_flow.png)
 
 However, the shift to serial communication introduces new challenges, particularly in ensuring that all lanes remain synchronized and that the receiver interprets data boundaries consistently. To address this, the JESD204B standard specifies a structured three-phase process to establish a reliable link between the transmitter and receiver:
 
@@ -120,7 +119,6 @@ In Xilinx FPGAs, such as the Zynq UltraScale+ series, the physical layer of the 
 
 The AMD LogiCORE™ JESD204 PHY IP core facilitates this integration by providing a configurable interface that connects the JESD204 logic to the GTH transceivers.
 
-![Physical Layer Xilinx IP Core Block Diagram](figures/phy_ip.png)
 
 Key features of this IP core include:
 
@@ -170,20 +168,6 @@ Special Control Characters used in JESD204B
 </div>
 
 This link layer handles most of the complexity in establishing and stabilizing JESD204B links. The specific hardware implementation of these modules is described in <a href="#chap:implementation" data-reference-type="ref" data-reference="chap:implementation">3</a>, where overall structure, design and interface decisions are discussed in more detail.
-
-### Related Works
-
-The motivation for this work was primarily driven by the need for a reproducible, license-free JESD204B receiver IP core that could be deployed on Xilinx UltraScale+ devices - supporting the broader goals of transparency, accessibility and long-term maintainability in academic hardware development.
-
-[Xilinx (now AMD)](https://www.xilinx.com/products/intellectual-property/jesd204.html) offers a comprehensive and industry-validated solution via the LogiCORE JESD204 IP, which supports JESD204B and the newer JESD204C standard, along with advanced features such as 64b/66b line encoding and deterministic latency across all subclasses. However, this IP is proprietary, and its licensing costs render it impractical for open research platforms or resource-constrained environments. Additionally, the closed-source nature of the IP restricts internal visibility, hinders system-level debugging, and limits opportunities for community-driven development or modification.
-
-To better understand JESD204B implementation details, several open-source repositories were reviewed:
-
-- [LiteJESD204B](https://github.com/enjoy-digital/litejesd204b), developed as part of the LiteX ecosystem, is among the most complete implementations. It supports configurable PHY and Link layers, includes CGS and ILAS, and has been demonstrated on both Xilinx 7-series and UltraScale devices. However, its deep integration with the Migen/LiteX Python-based toolchain introduces significant overhead for users relying on traditional Verilog or SystemVerilog workflows common in both academic and industrial environments.
-
-- [Analog Devices' JESD204 HDL framework](https://github.com/analogdevicesinc/hdl/tree/master/library/jesd204), which is developed alongside their data converter evaluation platforms. Although robust in functionality and tightly integrated with ADI hardware, the framework is not fully open source and includes license constraints that limit its general applicability. Additionally, certain platform-specific modifications are required to adapt the IP for non-ADI devices, reducing its portability and ease of integration.
-
-Given these limitations in both commercial and open-source solutions, this project aims to provide a fully open, modular, and well-documented JESD204B RX IP core that can be readily integrated into existing SystemVerilog workflows.
 
 # JESD204B Rx Implementation
 
