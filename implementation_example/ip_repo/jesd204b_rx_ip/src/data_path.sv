@@ -99,19 +99,29 @@ module data_path #(
   //--------------------------------------------------------------------------
 
   logic frame_is_cgs, frame_is_error;
+  logic ifs_start_q, ifs_start_d;
 
   assign frame_is_cgs  = &char_cgs;
   assign frame_is_error = |char_error;
 
-  always_ff @(posedge clk_i) begin
-    if (!rst_ni) begin
-      ifs_start_o <= 1'b0;
-    end else if (ifs_reset_i) begin
-      ifs_start_o <= 1'b0;
+  always_comb begin
+    ifs_start_d = ifs_start_q;
+
+    if (ifs_reset_i) begin
+      ifs_start_d = 1'b0;
     end else if (!frame_is_cgs && !frame_is_error) begin
-      ifs_start_o <= 1'b1;
+      ifs_start_d = 1'b1;
     end
   end
+
+  always_ff @(posedge clk_i) begin
+    if (!rst_ni)
+      ifs_start_q <= 1'b0;
+    else
+      ifs_start_q <= ifs_start_d;
+  end
+
+  assign ifs_start_o = ifs_start_q;
 
   //--------------------------------------------------------------------------
   // Octet Alignment Index Logic

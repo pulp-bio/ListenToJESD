@@ -1,16 +1,3 @@
-// Copyright 2025 ETH Zurich
-// Copyright and related rights are licensed under the Solderpad Hardware
-// License, Version 0.51 (the "License"); you may not use this file except in
-// compliance with the License.  You may obtain a copy of the License at
-// http://solderpad.org/licenses/SHL-0.51. Unless required by applicable law
-// or agreed to in writing, software, hardware and materials distributed under
-// this License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-// CONDITIONS OF ANY KIND, either express or implied. See the License for the
-// specific language governing permissions and limitations under the License.
-//
-// Authors:
-// Soumyo Bhattacharjee  <sbhattacharj@student.ethz.ch>
-//
 //------------------------------------------------------------------------------
 // Description:
 //   ILAS (Initial Lane Alignment Sequence) Monitor for JESD204B.
@@ -55,7 +42,7 @@ module ilas_monitor #(
   logic last_octet_seen_d;
   logic ilas_start_d;
 
-  logic ilas_config_valid_q;
+  logic ilas_config_valid_q, ilas_config_valid_d;
   logic [1:0] ilas_config_addr_q;
   logic [DATA_WIDTH-1:0] ilas_config_data_q;
 
@@ -94,16 +81,22 @@ module ilas_monitor #(
   assign ilas_start_d = char_is_k28_i[1] && (data_i[15:13] == 3'h4);
 
   // ILAS Config Valid Detection
-  always_ff @(posedge clk_i) begin
-    if (!rst_ni) begin
-      ilas_config_valid_q <= 1'b0;
-    end else if (state_q == ST_ILAS) begin
-      if (ilas_start_d) begin
-        ilas_config_valid_q <= 1'b1;
-      end else if (ilas_config_addr_q == ILAS_CONFIG_WORDS-1) begin
-        ilas_config_valid_q <= 1'b0;
-      end
+  always_comb begin
+    ilas_config_valid_d = ilas_config_valid_q;
+
+    if (state_q == ST_ILAS) begin
+      if (ilas_start_d)
+        ilas_config_valid_d = 1'b1;
+      else if (ilas_config_addr_q == ILAS_CONFIG_WORDS - 1)
+        ilas_config_valid_d = 1'b0;
     end
+  end
+
+  always_ff @(posedge clk_i) begin
+    if (!rst_ni)
+      ilas_config_valid_q <= 1'b0;
+    else
+      ilas_config_valid_q <= ilas_config_valid_d;
   end
 
   // ILAS Config Address Increment

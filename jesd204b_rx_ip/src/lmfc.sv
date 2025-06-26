@@ -1,16 +1,3 @@
-// Copyright 2025 ETH Zurich
-// Copyright and related rights are licensed under the Solderpad Hardware
-// License, Version 0.51 (the "License"); you may not use this file except in
-// compliance with the License.  You may obtain a copy of the License at
-// http://solderpad.org/licenses/SHL-0.51. Unless required by applicable law
-// or agreed to in writing, software, hardware and materials distributed under
-// this License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-// CONDITIONS OF ANY KIND, either express or implied. See the License for the
-// specific language governing permissions and limitations under the License.
-//
-// Authors:
-// Soumyo Bhattacharjee  <sbhattacharj@student.ethz.ch>
-//
 //------------------------------------------------------------------------------
 // Description:
 //   Local Multi-Frame Clock (LMFC) Generator for JESD204B.
@@ -42,13 +29,16 @@ module lmfc #(
 );
 
   // Internal Signals
-  //FIXME : Sysref is a pulse and not single shot version
   logic sysref_capture;
   logic sysref_pulse;
   logic sysref_detected;
-  logic [7:0] lmfc_counter;
-  logic       lmfc_active;
   logic       lmfc_clk;
+
+  logic [7:0] lmfc_counter_q;
+  logic       lmfc_active_q;
+
+  logic [7:0] lmfc_counter_d;
+  logic lmfc_active_d;
 
   // Synchronize SYSREF pulse into clk_i domain
   double_flop_sync #(
@@ -78,18 +68,29 @@ module lmfc #(
     end
   end
 
-  // LMFC Counter Logic
+  // LMFC Next State Logic
+  always_comb begin
+    lmfc_counter_d = lmfc_counter_q;
+    lmfc_active_d  = lmfc_active_q;
+
+    if (sysref_pulse && !sysref_detected) begin
+      lmfc_counter_d = 8'd0;
+      lmfc_active_d  = 1'b1;
+    end else if (lmfc_counter_q == (BEATS_PER_MULTIFRAME - 1)) begin
+      lmfc_counter_d = 8'd0;
+    end else begin
+      lmfc_counter_d = lmfc_counter_q + 1;
+    end
+  end
+
+  // LMFC State Update Logic
   always_ff @(posedge clk_i) begin
     if (!rst_ni) begin
-      lmfc_counter <= 8'd0;
-      lmfc_active  <= 1'b0;
-    end else if (sysref_pulse && !sysref_detected) begin
-      lmfc_counter <= 8'd0; // LMFC Offset Configuration Possible Here
-      lmfc_active  <= 1'b1;
-    end else if (lmfc_counter == (BEATS_PER_MULTIFRAME - 1)) begin
-      lmfc_counter <= 8'd0;
+      lmfc_counter_q <= 8'd0;
+      lmfc_active_q  <= 1'b0;
     end else begin
-      lmfc_counter <= lmfc_counter + 1;
+      lmfc_counter_q <= lmfc_counter_d;
+      lmfc_active_q  <= lmfc_active_d;
     end
   end
 
@@ -97,15 +98,13 @@ module lmfc #(
   always_ff @(posedge clk_i) begin
     if (!rst_ni) begin
       lmfc_clk <= 1'b0;
-    end else if (lmfc_active) begin
-      lmfc_clk <= (lmfc_counter == 0);
-    end else begin
-      lmfc_clk <= 1'b0;
+    end else if (lmfc_active_q) begin
+      lmfc_clk <= (lmfc_counter_q == 0);
     end
   end
 
   // Outputs
   assign lmfc_clk_o     = lmfc_clk;
-  assign lmfc_counter_o = lmfc_counter;
+  assign lmfc_counter_o = lmfc_counter_q;
 
 endmodule

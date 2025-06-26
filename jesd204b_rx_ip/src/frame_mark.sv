@@ -1,16 +1,3 @@
-// Copyright 2025 ETH Zurich
-// Copyright and related rights are licensed under the Solderpad Hardware
-// License, Version 0.51 (the "License"); you may not use this file except in
-// compliance with the License.  You may obtain a copy of the License at
-// http://solderpad.org/licenses/SHL-0.51. Unless required by applicable law
-// or agreed to in writing, software, hardware and materials distributed under
-// this License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-// CONDITIONS OF ANY KIND, either express or implied. See the License for the
-// specific language governing permissions and limitations under the License.
-//
-// Authors:
-// Soumyo Bhattacharjee  <sbhattacharj@student.ethz.ch>
-//
 //------------------------------------------------------------------------------
 // Description:
 //   Frame and Multiframe Marker Generator for JESD204B.
@@ -52,14 +39,20 @@ module frame_mark #(
 
   // Frame Counter
   logic [$clog2(BEATS_PER_FRAME)-1:0] frame_ctr_q;
+  logic [$clog2(BEATS_PER_FRAME)-1:0] frame_ctr_d;
+
+  always_comb begin
+    if (frame_ctr_q == BEATS_PER_FRAME - 1)
+      frame_ctr_d = '0;
+    else
+      frame_ctr_d = frame_ctr_q + 1;
+  end
 
   always_ff @(posedge clk_i) begin
     if (!rst_ni) begin
       frame_ctr_q <= '0;
-    end else if (frame_ctr_q == BEATS_PER_FRAME - 1) begin
-      frame_ctr_q <= '0;
     end else begin
-      frame_ctr_q <= frame_ctr_q + 1;
+      frame_ctr_q <= frame_ctr_d;
     end
   end
 
@@ -68,14 +61,21 @@ module frame_mark #(
 
   // Multiframe Counter
   logic [$clog2(BEATS_PER_MULTIFRAME)-1:0] multiframe_ctr_q;
+  logic [$clog2(BEATS_PER_MULTIFRAME)-1:0] multiframe_ctr_d;
+
+  always_comb begin
+    if (multiframe_ctr_q == BEATS_PER_MULTIFRAME - 1) begin
+      multiframe_ctr_d = '0;
+    end else begin
+      multiframe_ctr_d = multiframe_ctr_q + 1;
+    end
+  end
 
   always_ff @(posedge clk_i) begin
     if (!rst_ni) begin
       multiframe_ctr_q <= '0;
-    end else if (multiframe_ctr_q == BEATS_PER_MULTIFRAME - 1) begin
-      multiframe_ctr_q <= '0;
     end else begin
-      multiframe_ctr_q <= multiframe_ctr_q + 1;
+      multiframe_ctr_q <= multiframe_ctr_d;
     end
   end
 

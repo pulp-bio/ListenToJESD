@@ -1,16 +1,3 @@
-// Copyright 2025 ETH Zurich
-// Copyright and related rights are licensed under the Solderpad Hardware
-// License, Version 0.51 (the "License"); you may not use this file except in
-// compliance with the License.  You may obtain a copy of the License at
-// http://solderpad.org/licenses/SHL-0.51. Unless required by applicable law
-// or agreed to in writing, software, hardware and materials distributed under
-// this License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-// CONDITIONS OF ANY KIND, either express or implied. See the License for the
-// specific language governing permissions and limitations under the License.
-//
-// Authors:
-// Soumyo Bhattacharjee  <sbhattacharj@student.ethz.ch>
-//
 //------------------------------------------------------------------------------
 // Description:
 //   CGS (Code Group Synchronization) State Machine for JESD204B.
@@ -54,8 +41,8 @@ module cgs #(
 
   // Internal Signals
   // Currently support tolerance and hold window of 16
-  logic [3:0] beat_error_cnt_q;
-  logic [3:0] beat_cgs_cnt_q;
+  logic [3:0] beat_error_cnt_q, beat_error_cnt_d;
+  logic [3:0] beat_cgs_cnt_q, beat_cgs_cnt_d;
   logic       beat_is_cgs;
   logic       beat_has_error;
   logic       beat_full_error;
@@ -88,7 +75,7 @@ module cgs #(
               state_d = ST_DATA;    
           end
         end
-        ST_DATA: begin //FIXME : Single Error Sends this back to CHECK Mode
+        ST_DATA: begin
           if (beat_has_error) begin
             state_d = ST_CHECK;
           end
@@ -100,6 +87,27 @@ module cgs #(
   end
 
   // FSM State and Error Counter Update
+  always_comb begin
+    beat_error_cnt_d = beat_error_cnt_q;
+    beat_cgs_cnt_d   = beat_cgs_cnt_q;
+
+    if (state_q == ST_INIT) begin
+      beat_error_cnt_d = '0;
+    end else if (beat_has_error) begin
+      beat_error_cnt_d = beat_error_cnt_q + 1;
+    end else begin
+      beat_error_cnt_d = '0;
+    end
+
+    // beat_cgs_cnt logic
+    if (state_q == ST_CHECK && beat_is_cgs) begin
+      beat_cgs_cnt_d = beat_cgs_cnt_q + 1;
+    end else begin
+      beat_cgs_cnt_d = '0;
+    end
+  end
+
+
   always_ff @(posedge clk_i) begin
     if (!rst_ni) begin
       state_q          <= ST_INIT;
@@ -107,18 +115,8 @@ module cgs #(
       beat_cgs_cnt_q   <= '0;
     end else begin
       state_q <= state_d;
-      if (state_q == ST_INIT) begin
-        beat_error_cnt_q <= '0;
-      end else if (beat_has_error) begin
-        beat_error_cnt_q <= beat_error_cnt_q + 1;
-      end else begin
-        beat_error_cnt_q <= '0;
-      end
-      if (state_q == ST_CHECK && beat_is_cgs) begin
-        beat_cgs_cnt_q <= beat_cgs_cnt_q + 1;
-      end else begin
-        beat_cgs_cnt_q <= '0;
-      end
+      beat_error_cnt_q <= beat_error_cnt_d;
+      beat_cgs_cnt_q   <= beat_cgs_cnt_d;
     end
   end
 

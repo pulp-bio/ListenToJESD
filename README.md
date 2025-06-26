@@ -1,4 +1,4 @@
-# ListenToJESD204B: A Lite JESD204B Receiver IP Core
+# ListenToJESD204B: A Lightweight Open-SourceJESD204B IP Core for FPGA-Based Ultrasound Acquisition systems
 
 Welcome to **ListenToJESD204B**, an open-source, lightweight JESD204B receiver IP core developed for the **ListenToLight** open ultrasound platform. This core is designed to be easy to integrate, understand, and extend, while remaining compliant with the JESD204B standard.
 
@@ -122,8 +122,10 @@ The following enhancement is planned to be added soon:
 
 ## License
 
-This repository is available under the Solderpad Hardware License Version 0.51
-For further information have a look at the license file.
+This repository is available under the Solderpad Hardware License Version 0.51.
+The images are licensed under a Creative Commons Attribution 4.0 International License (CC BY 4.0).
+
+For further information have a look at the license files.
 
 ---
 
