@@ -1,4 +1,4 @@
-# JESD204B RX Lite IP Core
+# ListenToJESD204B RX IP Core
 
 An open-source JESD204B Receiver IP core implementation in SystemVerilog for Xilinx UltraScale+ devices.
 
@@ -179,7 +179,7 @@ The JESD204B RX IP core is designed as a modular SystemVerilog implementation th
 
 <figure id="fig:rx_ip">
 <img src="figures/jesd_rx.png" style="width:50.0%" />
-<figcaption>JESD204 RX Lite IP</figcaption>
+<figcaption>ListenToJESD204B IP</figcaption>
 </figure>
 
 To facilitate ease of integration into larger FPGA designs, the JESD204B RX core has been packaged as a reusable IP block within Vivado using the IP Packager tool. This enables seamless insertion into block design flows, where the IP can be instantiated and connected graphically. The IP core exposes a clean parameter interface, allowing configuration of key protocol parameters such as the number of lanes, octets per frame, multiframe structure, and descrambling support directly through the Vivado GUI. Moreover, its modular structure supports flexible adaptation to different numbers of GTX interfaces, making it suitable for both single-lane and multi-lane JESD204B applications.
@@ -308,7 +308,7 @@ All major phases of the protocol were exercised during simulation: <span acronym
 
 <figure id="fig:res_02">
 <img src="figures/result_rx_ip.png" style="width:80.0%" />
-<figcaption>Simulation Output for JESD204B Lite RX IP</figcaption>
+<figcaption>Simulation Output for ListenToJESD204B RX IP</figcaption>
 </figure>
 
 These simulation results confirm that the developed IP core adheres to the JESD204B protocol, supports deterministic multiframe alignment, and correctly reconstructs framed and descrambled data. They also establish a confidence baseline before hardware deployment.

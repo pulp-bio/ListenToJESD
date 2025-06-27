@@ -62,6 +62,7 @@ Vivado should now detect the IP and list it as available in the IP catalog.
 
 For a detailed explanation of the IP's internal architecture and design decisions, see the accompanying technical report found in the `docs/` folder or browse the comments in the RTL source files. For a concise overview, refer to the paper ListenToJESD204B: A Lightweight Open-Source JESD204B IP Core for FPGA-Based Ultrasound Acquisition systems
 accepted to 10th IEEE International Workshop on Advances in Sensors and Interfaces (IWASI 2025).
+
 ---
 
 ## Tested Platforms
