@@ -34,7 +34,7 @@ if {[llength [get_projects -quiet]] == 0} {
 
 # 4) IP repositories → tell Vivado where to find your custom repos, then refresh
 set ip_repo_list [list \
-    "./ip_repo/jesd204b_rx_ip" \
+    "../jesd204b_rx_ip" \
 ]
 set_property ip_repo_paths [join $ip_repo_list ";"] [current_project]
 update_ip_catalog
