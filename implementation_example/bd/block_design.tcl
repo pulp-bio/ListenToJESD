@@ -85,7 +85,7 @@ proc create_hier_cell_JESD_subsystem { parentCell nameHier } {
   create_bd_pin -dir I -type clk refclk_fabric_320
   create_bd_pin -dir I rx_sysref
   create_bd_pin -dir I rx_core_reset
-  create_bd_pin -dir I -type clk s_axi_aclk
+  create_bd_pin -dir I -type clk clk_drp_i
   create_bd_pin -dir I -from 0 -to 0 gt0_rx_Lane1_n
   create_bd_pin -dir I -type clk rx_quadclk
   create_bd_pin -dir I -from 0 -to 0 gt0_rx_Lane1_p
@@ -128,8 +128,7 @@ proc create_hier_cell_JESD_subsystem { parentCell nameHier } {
     CONFIG.RX_GT_REFCLK_FREQ {320} \
     CONFIG.RX_PLL_SELECTION {2} \
     CONFIG.Rx_JesdVersion {0} \
-    CONFIG.SupportLevel {1} \
-    CONFIG.TransceiverControl {true} \
+    CONFIG.TransceiverControl {false} \
     CONFIG.Tx_JesdVersion {0} \
   ] $jesd204_phy_1
 
@@ -189,7 +188,7 @@ proc create_hier_cell_JESD_subsystem { parentCell nameHier } {
   connect_bd_net -net rx_core_reset_1 [get_bd_pins rx_core_reset] [get_bd_pins jesd204_phy_0/rx_sys_reset] [get_bd_pins jesd204_phy_0/tx_sys_reset] [get_bd_pins jesd204_phy_1/rx_sys_reset] [get_bd_pins jesd204_phy_1/tx_sys_reset]
   connect_bd_net -net rx_quadclk_1 [get_bd_pins rx_quadclk] [get_bd_pins jesd204_phy_0/qpll1_refclk] [get_bd_pins jesd204_phy_1/qpll1_refclk]
   connect_bd_net -net rx_sysref_1 [get_bd_pins rx_sysref] [get_bd_pins jesd204b_rx_0/sysref]
-  connect_bd_net -net s_axi_aclk_1 [get_bd_pins s_axi_aclk] [get_bd_pins jesd204_phy_0/drpclk] [get_bd_pins jesd204_phy_1/drpclk]
+  connect_bd_net -net clk_drp_i_1 [get_bd_pins clk_drp_i] [get_bd_pins jesd204_phy_0/drpclk] [get_bd_pins jesd204_phy_1/drpclk]
   connect_bd_net -net util_vector_logic_0_Res [get_bd_pins util_vector_logic_0/Res] [get_bd_pins jesd204b_rx_0/rx_reset_done]
   connect_bd_net -net util_vector_logic_1_Res [get_bd_pins util_vector_logic_1/Res] [get_bd_pins CE_gt_powergood]
 
@@ -235,13 +234,13 @@ proc create_hier_cell_ctrl_and_reset { parentCell nameHier } {
 
   # Create pins
   create_bd_pin -dir O -from 0 -to 0 -type rst rx_rst
-  create_bd_pin -dir O -type clk clk_out_120
+  create_bd_pin -dir O -type clk clk_120_o
   create_bd_pin -dir O -from 0 -to 0 -type rst axi_120_aresetn
   create_bd_pin -dir O -type rst reset_rx_jesd
   create_bd_pin -dir I -type clk refclk_fabric_320
-  create_bd_pin -dir O -type clk clk_out_320
+  create_bd_pin -dir O -type clk clk_320_o
   create_bd_pin -dir O -from 0 -to 0 axi_80_aresetn
-  create_bd_pin -dir O clk_out_80
+  create_bd_pin -dir O clk_80_o
 
   # Create instance: proc_sys_reset_1, and set properties
   set proc_sys_reset_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 proc_sys_reset_1 ]
@@ -259,13 +258,13 @@ proc create_hier_cell_ctrl_and_reset { parentCell nameHier } {
   ] $proc_sys_reset_2
 
 
-  # Create instance: jesd204_0_control_0, and set properties
-  set block_name jesd204_0_control
-  set block_cell_name jesd204_0_control_0
-  if { [catch {set jesd204_0_control_0 [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+  # Create instance: reset_pulse_generator_0, and set properties
+  set block_name reset_pulse_generator
+  set block_cell_name reset_pulse_generator_0
+  if { [catch {set reset_pulse_generator_0 [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
      catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
      return 1
-   } elseif { $jesd204_0_control_0 eq "" } {
+   } elseif { $reset_pulse_generator_0 eq "" } {
      catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
      return 1
    }
@@ -291,8 +290,8 @@ proc create_hier_cell_ctrl_and_reset { parentCell nameHier } {
     CONFIG.CLKOUT2_PHASE_ERROR {73.069} \
     CONFIG.CLKOUT2_REQUESTED_OUT_FREQ {120} \
     CONFIG.CLKOUT2_USED {true} \
-    CONFIG.CLK_OUT1_PORT {clk_out_80} \
-    CONFIG.CLK_OUT2_PORT {clk_out_120} \
+    CONFIG.CLK_OUT1_PORT {clk_80_o} \
+    CONFIG.CLK_OUT2_PORT {clk_120_o} \
     CONFIG.MMCM_CLKFBOUT_MULT_F {3.750} \
     CONFIG.MMCM_CLKOUT0_DIVIDE_F {15.000} \
     CONFIG.MMCM_CLKOUT1_DIVIDE {10} \
@@ -316,17 +315,17 @@ proc create_hier_cell_ctrl_and_reset { parentCell nameHier } {
 
   # Create port connections
   connect_bd_net -net Net2 [get_bd_pins proc_sys_reset_2/interconnect_aresetn] [get_bd_pins axi_120_aresetn]
-  connect_bd_net -net axi_reset [get_bd_pins vio_0/probe_out2] [get_bd_pins jesd204_0_control_0/axi_reset]
-  connect_bd_net -net clk_120 [get_bd_pins clk_wiz_0/clk_out_120] [get_bd_pins clk_out_120] [get_bd_pins vio_0/clk] [get_bd_pins jesd204_0_control_0/m_axi_aclk] [get_bd_pins proc_sys_reset_2/slowest_sync_clk]
-  connect_bd_net -net clk_320 [get_bd_pins refclk_fabric_320] [get_bd_pins clk_wiz_0/clk_in1] [get_bd_pins clk_out_320] [get_bd_pins proc_sys_reset_1/slowest_sync_clk]
-  connect_bd_net -net clk_wiz_0_clk_out_80 [get_bd_pins clk_wiz_0/clk_out_80] [get_bd_pins proc_sys_reset_3/slowest_sync_clk] [get_bd_pins clk_out_80]
+  connect_bd_net -net axi_reset [get_bd_pins vio_0/probe_out2] [get_bd_pins reset_pulse_generator_0/axi_reset]
+  connect_bd_net -net clk_120 [get_bd_pins clk_wiz_0/clk_120_o] [get_bd_pins clk_120_o] [get_bd_pins vio_0/clk] [get_bd_pins reset_pulse_generator_0/m_axi_aclk] [get_bd_pins proc_sys_reset_2/slowest_sync_clk]
+  connect_bd_net -net clk_320 [get_bd_pins refclk_fabric_320] [get_bd_pins clk_wiz_0/clk_in1] [get_bd_pins clk_320_o] [get_bd_pins proc_sys_reset_1/slowest_sync_clk]
+  connect_bd_net -net clk_wiz_0_clk_80_o [get_bd_pins clk_wiz_0/clk_80_o] [get_bd_pins proc_sys_reset_3/slowest_sync_clk] [get_bd_pins clk_80_o]
   connect_bd_net -net clk_wiz_0_locked [get_bd_pins clk_wiz_0/locked] [get_bd_pins proc_sys_reset_1/dcm_locked] [get_bd_pins proc_sys_reset_2/dcm_locked] [get_bd_pins proc_sys_reset_3/dcm_locked]
-  connect_bd_net -net jesd204_0_control_0_reset_axi_jesd_n1 [get_bd_pins jesd204_0_control_0/reset_axi_jesd_n] [get_bd_pins proc_sys_reset_1/ext_reset_in] [get_bd_pins proc_sys_reset_2/ext_reset_in] [get_bd_pins proc_sys_reset_3/ext_reset_in]
-  connect_bd_net -net master_reset [get_bd_pins vio_0/probe_out0] [get_bd_pins jesd204_0_control_0/master_reset]
+  connect_bd_net -net reset_pulse_generator_0_reset_axi_jesd_n1 [get_bd_pins reset_pulse_generator_0/reset_axi_jesd_n] [get_bd_pins proc_sys_reset_1/ext_reset_in] [get_bd_pins proc_sys_reset_2/ext_reset_in] [get_bd_pins proc_sys_reset_3/ext_reset_in]
+  connect_bd_net -net master_reset [get_bd_pins vio_0/probe_out0] [get_bd_pins reset_pulse_generator_0/master_reset]
   connect_bd_net -net proc_sys_reset_1_peripheral_aresetn [get_bd_pins proc_sys_reset_1/peripheral_aresetn] [get_bd_pins rx_rst]
   connect_bd_net -net proc_sys_reset_3_interconnect_aresetn [get_bd_pins proc_sys_reset_3/interconnect_aresetn] [get_bd_pins axi_80_aresetn]
-  connect_bd_net -net rx_core_reset [get_bd_pins jesd204_0_control_0/reset_rx_jesd] [get_bd_pins reset_rx_jesd]
-  connect_bd_net -net rx_reset [get_bd_pins vio_0/probe_out1] [get_bd_pins jesd204_0_control_0/rx_reset]
+  connect_bd_net -net rx_core_reset [get_bd_pins reset_pulse_generator_0/reset_rx_jesd] [get_bd_pins reset_rx_jesd]
+  connect_bd_net -net rx_reset [get_bd_pins vio_0/probe_out1] [get_bd_pins reset_pulse_generator_0/rx_reset]
 
   # Restore current instance
   current_bd_instance $oldCurInst
@@ -411,8 +410,8 @@ proc create_root_design { parentCell } {
   connect_bd_net -net JESD_subsystem_rx_open_sync [get_bd_pins JESD_subsystem/rx_sync] [get_bd_ports rx_sync]
   connect_bd_net -net clk_320 [get_bd_ports refclk_fabric_320] [get_bd_pins ctrl_and_reset/refclk_fabric_320]
   connect_bd_net -net ctrl_and_reset_axi_80_aresetn [get_bd_pins ctrl_and_reset/axi_80_aresetn] [get_bd_pins jesd_stream_flattene_0/m_axis_aresetn]
-  connect_bd_net -net ctrl_and_reset_clk_out_80 [get_bd_pins ctrl_and_reset/clk_out_80] [get_bd_pins jesd_stream_flattene_0/m_axis_aclk] [get_bd_pins ila_0/clk]
-  connect_bd_net -net ctrl_and_reset_clk_out_120 [get_bd_pins ctrl_and_reset/clk_out_120] [get_bd_pins JESD_subsystem/s_axi_aclk]
+  connect_bd_net -net ctrl_and_reset_clk_80_o [get_bd_pins ctrl_and_reset/clk_80_o] [get_bd_pins jesd_stream_flattene_0/m_axis_aclk] [get_bd_pins ila_0/clk]
+  connect_bd_net -net ctrl_and_reset_clk_120_o [get_bd_pins ctrl_and_reset/clk_120_o] [get_bd_pins JESD_subsystem/clk_drp_i]
   connect_bd_net -net ctrl_and_reset_rx_rst [get_bd_pins ctrl_and_reset/rx_rst] [get_bd_pins JESD_subsystem/rx_block_rst] [get_bd_pins jesd_stream_flattene_0/s_axis_aresetn]
   connect_bd_net -net gt0_rx_Lane1_n_1 [get_bd_ports gt0_rx_Lane1_n] [get_bd_pins JESD_subsystem/gt0_rx_Lane1_n]
   connect_bd_net -net gt0_rx_Lane1_p_1 [get_bd_ports gt0_rx_Lane1_p] [get_bd_pins JESD_subsystem/gt0_rx_Lane1_p]
@@ -420,7 +419,7 @@ proc create_root_design { parentCell } {
   connect_bd_net -net gt1_rx_Lane1_p_1 [get_bd_ports gt1_rx_Lane1_p] [get_bd_pins JESD_subsystem/gt1_rx_Lane1_p]
   connect_bd_net -net jesd_stream_flattene_0_m_axis_tdata [get_bd_pins jesd_stream_flattene_0/m_axis_tdata] [get_bd_pins ila_0/probe0]
   connect_bd_net -net jesd_stream_flattene_0_m_axis_tvalid [get_bd_pins jesd_stream_flattene_0/m_axis_tvalid] [get_bd_pins ila_0/probe1]
-  connect_bd_net -net refclk_fabric_320_1 [get_bd_pins ctrl_and_reset/clk_out_320] [get_bd_pins JESD_subsystem/refclk_fabric_320] [get_bd_pins jesd_stream_flattene_0/s_axis_aclk]
+  connect_bd_net -net refclk_fabric_320_1 [get_bd_pins ctrl_and_reset/clk_320_o] [get_bd_pins JESD_subsystem/refclk_fabric_320] [get_bd_pins jesd_stream_flattene_0/s_axis_aclk]
   connect_bd_net -net rx_core_reset [get_bd_pins ctrl_and_reset/reset_rx_jesd] [get_bd_pins JESD_subsystem/rx_core_reset]
   connect_bd_net -net rx_quadclk_1 [get_bd_ports rx_quadclk] [get_bd_pins JESD_subsystem/rx_quadclk]
   connect_bd_net -net rx_sysref_1 [get_bd_ports rx_sysref] [get_bd_pins JESD_subsystem/rx_sysref]
