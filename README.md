@@ -27,7 +27,7 @@ To use this IP in your own Vivado project, follow these steps:
 1. **Clone this repository:**
 
    ```bash
-   git clone https://iis-git.ee.ethz.ch/sbhattacharj/listentojesd204b.git
+   git clone https://github.com/pulp-bio/ListenToJESD.git
     ```
 
 
